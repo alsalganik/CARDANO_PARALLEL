@@ -4,14 +4,13 @@ module task
 contains
   subroutine GetMaxCoordinates(A, x1, y1, x2, y2)
     implicit none
-    real(8), intent(in), dimension(:,:) :: A
+    real(8), dimension(:,:) :: A
     integer(4), intent(out) :: x1, y1, x2, y2
     integer(4) :: n
     integer(4) :: L, R, Up, Down
     integer(4) :: m, tmp
-    real(8), allocatable :: currcolumn(:), B(:,:)
+    real(8), allocatable :: currcolumn(:)
     real(8) :: currsum, maxsum, global_maxsum
-    logical :: istrans
     integer(4) :: mpiErr, mpiSize, mpiRank, tmp_mpiRank, global_mpiRank
 
     call mpi_comm_size(mpi_comm_world, mpiSize, mpiErr)
@@ -20,33 +19,20 @@ contains
 
     m = size(A, dim=1)
     n = size(A, dim=2)
-    istrans = .FALSE.
-
-    if (m < n) then
-       istrans = .TRUE.
-       allocate(B(n,m))
-       B = transpose(A)
-       m = size(B, 1)
-       n = size(B, 2)
-    else
-       allocate(B(m,n))
-       B = A
-    endif
-
     allocate(currcolumn(m))
 
-    maxsum=B(1, 1)
+    maxsum=A(1, 1)
     x1=1
     y1=1
     x2=1
     y2=1
 
     do L = mpiRank + 1, n, mpiSize
-       currcolumn = B(:, L)
+       currcolumn = A(:, L)
        do R=L, n
 
           if (R > L) then
-             currcolumn = currcolumn + B(:, R)
+             currcolumn = currcolumn + A(:, R)
           endif
 
           call FindMaxInArray(currcolumn, currsum, Up, Down)
@@ -79,17 +65,6 @@ contains
     call mpi_bcast(y2, 1, mpi_real8, global_mpiRank, mpi_comm_world, mpiErr)
 
     deallocate(currcolumn)
-    deallocate(B)
-    if (istrans) then
-       tmp = x1
-       x1 = y1
-       y1 = tmp
-
-       tmp = y2
-       y2 = x2
-       x2 = tmp
-    endif
-
   end subroutine GetMaxCoordinates
 
 
