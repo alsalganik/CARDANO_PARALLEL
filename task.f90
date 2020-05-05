@@ -24,10 +24,12 @@ contains
 
     if (m < n) then
        istrans = .TRUE.
+       allocate(B(n,m))
        B = transpose(A)
        m = size(B, 1)
        n = size(B, 2)
     else
+       allocate(B(m,n))
        B = A
     endif
 
@@ -77,7 +79,7 @@ contains
     call mpi_bcast(y2, 1, mpi_real8, global_mpiRank, mpi_comm_world, mpiErr)
 
     deallocate(currcolumn)
-
+    deallocate(B)
     if (istrans) then
        tmp = x1
        x1 = y1
